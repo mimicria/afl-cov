@@ -182,10 +182,10 @@ def process_afl_test_cases(cargs):
                 ### for the current AFL test case file
                 if run_once:
                     run_cmd(cargs.coverage_cmd.replace('AFL_FILE', f),
-                            cov_paths['log_file'], cargs, NO_OUTPUT)
+                            cov_paths['log_file'], cargs, NO_OUTPUT,30)
                 else:
                     out_lines = run_cmd(cargs.coverage_cmd.replace('AFL_FILE', f),
-                            cov_paths['log_file'], cargs, WANT_OUTPUT)[1]
+                            cov_paths['log_file'], cargs, WANT_OUTPUT,30)[1]
                     run_once = True
 
                 if cargs.afl_queue_id_limit \
@@ -688,7 +688,7 @@ def get_running_pid(stats_file, pid_re):
                 break
     return pid
 
-def run_cmd(cmd, log_file, cargs, collect):
+def run_cmd(cmd, log_file, cargs, collect, timeout_s=None):
 
     out = []
 
@@ -705,9 +705,12 @@ def run_cmd(cmd, log_file, cargs, collect):
     else:
         fh = open(os.devnull, 'w')
 
-    es = subprocess.call(cmd, stdin=None,
-            stdout=fh, stderr=subprocess.STDOUT, shell=True)
-
+    try:
+        es = subprocess.run(cmd, timeout=timeout_s, stdin=None, stdout=fh, stderr=subprocess.STDOUT, shell=True)
+        ess = es.returncode
+    except subprocess.TimeoutExpired:
+        print(f'    [-] Timeout for {cmd} expired')
+        ess=0
     fh.close()
 
     if cargs.disable_cmd_redirection or collect == WANT_OUTPUT \
@@ -717,16 +720,16 @@ def run_cmd(cmd, log_file, cargs, collect):
                 out.append(line.rstrip('\n'))
         os.unlink(fh.name)
 
-    if (es != 0) and (collect == LOG_ERRORS or collect == WANT_OUTPUT):
+    if (ess != 0) and (collect == LOG_ERRORS or collect == WANT_OUTPUT):
         if log_file:
-            logr("    Non-zero exit status '%d' for CMD: %s" % (es, cmd),
+            logr("    Non-zero exit status '%d' for CMD: %s" % (ess, cmd),
                     log_file, cargs)
             for line in out:
                 logr(line, log_file, cargs)
         else:
-            print ("    Non-zero exit status '%d' for CMD: %s" % (es, cmd))
+            print ("    Non-zero exit status '%d' for CMD: %s" % (ess, cmd))
 
-    return es, out
+    return ess, out
 
 def import_fuzzing_dirs(cov_paths, cargs):
 
