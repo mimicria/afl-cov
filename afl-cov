@@ -716,8 +716,11 @@ def run_cmd(cmd, log_file, cargs, collect, timeout_s=None):
     if cargs.disable_cmd_redirection or collect == WANT_OUTPUT \
             or collect == LOG_ERRORS:
         with open(fh.name, 'r') as f:
-            for line in f:
-                out.append(line.rstrip('\n'))
+            try:
+                for line in f:
+                    out.append(line.rstrip('\n'))
+            except UnicodeDecodeError:
+                print('    [-] Garbage log error')
         os.unlink(fh.name)
 
     if (ess != 0) and (collect == LOG_ERRORS or collect == WANT_OUTPUT):
