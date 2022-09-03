@@ -628,6 +628,39 @@ def log_coverage(out_lines, log_file, cargs):
                                 log_file, cargs)
     return
 
+def remove_unexist_files(tfile):
+    thereisnewfile = False
+    print('    [+] Start removing non-existent files from', tfile)
+    with open(tfile+'.res',"wt") as outf:
+        with open(tfile, 'rt') as inf:
+            for str in inf:
+                if thereisnewfile:
+                    thereisnewfile = False
+                    if str.startswith('SF:'):
+                        fname = str[3:-1]
+                        if os.path.exists(fname):
+                            # print('[+]', fname)
+                            found = True
+                            seq = [nfstr,str]
+                            outf.writelines(seq)
+                            continue
+                        else:
+                            print('[-]', fname)
+                            found = False
+                        continue
+                if str.startswith('TN:'):
+                    thereisnewfile = True
+                    nfstr = str
+                    continue
+                else:
+                    if found:
+                        seq = [str]
+                        outf.writelines(seq)
+                        continue
+                    else:
+                        continue
+    print('    [+] Non-existent files removed from lcov trace')
+
 def gen_web_cov_report(fuzz_dir, cov_paths, cargs):
 
     genhtml_opts = ''
@@ -635,11 +668,13 @@ def gen_web_cov_report(fuzz_dir, cov_paths, cargs):
     if cargs.enable_branch_coverage:
         genhtml_opts += ' --branch-coverage'
 
+    remove_unexist_files(cov_paths['lcov_info_final'])
+    newfn = cov_paths['lcov_info_final']+'.res'
     run_cmd(cargs.genhtml_path \
             + genhtml_opts
             + " --output-directory " \
             + cov_paths['web_dir'] + " " \
-            + cov_paths['lcov_info_final'], \
+            + newfn, \
             cov_paths['log_file'], cargs, LOG_ERRORS)
 
     logr("[+] Final lcov web report: %s/%s" % \
