@@ -639,13 +639,12 @@ def remove_unexist_files(tfile):
                     if str.startswith('SF:'):
                         fname = str[3:-1]
                         if os.path.exists(fname):
-                            # print('[+]', fname)
                             found = True
                             seq = [nfstr,str]
                             outf.writelines(seq)
                             continue
                         else:
-                            print('[-]', fname)
+                            print('    [-]', fname)
                             found = False
                         continue
                 if str.startswith('TN:'):
