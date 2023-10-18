@@ -182,10 +182,10 @@ def process_afl_test_cases(cargs):
                 ### for the current AFL test case file
                 if run_once:
                     run_cmd(cargs.coverage_cmd.replace('AFL_FILE', f),
-                            cov_paths['log_file'], cargs, NO_OUTPUT,30)
+                            cov_paths['log_file'], cargs, NO_OUTPUT,10)
                 else:
                     out_lines = run_cmd(cargs.coverage_cmd.replace('AFL_FILE', f),
-                            cov_paths['log_file'], cargs, WANT_OUTPUT,30)[1]
+                            cov_paths['log_file'], cargs, WANT_OUTPUT,10)[1]
                     run_once = True
 
                 if cargs.afl_queue_id_limit \
